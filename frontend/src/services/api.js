@@ -63,6 +63,7 @@ function qs(params) {
 export const api = {
   register: (body) => request("/auth/register", { method: "POST", body }),
   login: (body) => request("/auth/login", { method: "POST", body }),
+  demo: () => request("/auth/demo", { method: "POST" }),
   me: () => request("/auth/me"),
   meta: () => request("/meta"),
 

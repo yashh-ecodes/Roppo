@@ -147,3 +147,27 @@ def test_users_cannot_see_each_others_data(client, auth, sample_bytes):
     rid, vid = up["resume"]["id"], up["resume"]["versions"][0]["id"]
     assert client.get(f"/api/resumes/{rid}/versions/{vid}", headers=other).status_code == 404
     assert client.delete(f"/api/resumes/{rid}", headers=other).status_code == 404
+
+
+def test_demo_account_is_ready_to_present(client):
+    r = client.post("/api/auth/demo")
+    assert r.status_code == 201, r.text
+    h = {"Authorization": f"Bearer {r.json()['access_token']}"}
+    d = client.get("/api/dashboard", headers=h).json()
+    assert d["profile_confirmed"] and d["latest_analysis"] and d["top_matches"]
+    assert d["saved_jobs"]["total"] == 2 and d["roadmaps"]
+    assert client.get("/api/meta").json()["demo_mode"] is True
+
+
+def test_blank_database_url_falls_back_to_sqlite(monkeypatch):
+    from app.config import Settings, get_settings
+
+    monkeypatch.setenv("ROPPO_DATABASE_URL", "")
+    get_settings.cache_clear()
+    try:
+        assert get_settings().database_url == Settings.model_fields["database_url"].default
+        monkeypatch.setenv("ROPPO_DATABASE_URL", "postgres://u:p@host:5432/db")
+        get_settings.cache_clear()
+        assert get_settings().database_url == "postgresql+psycopg://u:p@host:5432/db"
+    finally:
+        get_settings.cache_clear()

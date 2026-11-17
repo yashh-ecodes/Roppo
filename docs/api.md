@@ -8,6 +8,7 @@ Every endpoint except register, login, health and meta needs `Authorization: Bea
 |---|---|---|
 | POST | `/api/auth/register` | Create an account → `{access_token, user}` |
 | POST | `/api/auth/login` | Sign in → `{access_token, user}` |
+| POST | `/api/auth/demo` | Create a pre-filled demo account with fictional data (when `ROPPO_DEMO_MODE=true`) |
 | GET | `/api/auth/me` | Current user |
 
 ## Resumes & profile

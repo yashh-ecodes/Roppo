@@ -49,12 +49,9 @@ def profile_out(p: CandidateProfile) -> dict:
     }
 
 
-@router.post("/resumes", status_code=201)
-async def upload_resume(file: UploadFile = File(...), user: User = Depends(get_current_user),
-                        db: Session = Depends(get_db)):
+def ingest_resume(db: Session, user: User, filename: str, content: bytes) -> dict:
+    """Validate, extract and store a resume, then (re)build the user's candidate profile."""
     settings = get_settings()
-    content = await file.read(settings.max_upload_mb * 1024 * 1024 + 1)
-    filename = Path(file.filename or "resume").name[:200]
     try:
         file_type = validate_upload(filename, content, settings.max_upload_mb)
         doc = extract_text(file_type, content)
@@ -90,6 +87,13 @@ async def upload_resume(file: UploadFile = File(...), user: User = Depends(get_c
     # Never log resume contents — only metadata.
     log.info("resume uploaded user=%s type=%s size=%s", user.id, file_type, len(content))
     return {"resume": resume_out(resume), "profile": profile_out(profile), "warnings": doc.warnings}
+
+
+@router.post("/resumes", status_code=201)
+async def upload_resume(file: UploadFile = File(...), user: User = Depends(get_current_user),
+                        db: Session = Depends(get_db)):
+    content = await file.read(get_settings().max_upload_mb * 1024 * 1024 + 1)
+    return ingest_resume(db, user, Path(file.filename or "resume").name[:200], content)
 
 
 @router.get("/resumes")

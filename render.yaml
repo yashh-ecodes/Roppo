@@ -1,0 +1,27 @@
+# Render Blueprint: Dashboard → New → Blueprint → pick this repo.
+services:
+  - type: web
+    name: roppo
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      # Generated once by Render; signs login tokens and never appears in the repository.
+      - key: ROPPO_JWT_SECRET
+        generateValue: true
+      - key: ROPPO_ENVIRONMENT
+        value: production
+      # One-click "Explore the demo" accounts (fictional data) for presentations.
+      - key: ROPPO_DEMO_MODE
+        value: "true"
+      - key: ROPPO_SEED_SAMPLE_JOBS
+        value: "true"
+      # Optional: AI explanations via Claude. Set the key in the Render dashboard (users must also opt in).
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Optional: persistent PostgreSQL (e.g. Supabase, Neon or Render Postgres). Without it an
+      # ephemeral SQLite file is used, which resets whenever the free instance restarts.
+      - key: ROPPO_DATABASE_URL
+        sync: false

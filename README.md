@@ -94,7 +94,28 @@ Architecture, data flow and the database schema are documented in [docs/architec
 
 ## Getting started
 
-### Option A — Docker (PostgreSQL + API + web)
+### Deploy on Render (one service: app + API)
+
+1. In Render, open **New → Blueprint** and pick this GitHub repo. `render.yaml` sets up a single Docker web service on the free plan
+   (the React app is built and served by FastAPI).
+2. Render generates `ROPPO_JWT_SECRET` once. When asked, you can leave `ANTHROPIC_API_KEY` and `ROPPO_DATABASE_URL` empty.
+3. When the build finishes, open `https://<service>.onrender.com` and click **Explore the demo**. You get a fresh account with a
+   fictional resume that has already been analysed, plus matches, saved jobs and a roadmap. Nothing to fill in.
+
+On the free plan the service sleeps after about 15 minutes idle and takes roughly 30–60 seconds to wake, so **open it a minute
+before presenting**. Without `ROPPO_DATABASE_URL` the SQLite database is ephemeral and resets when the instance restarts. That's
+fine for demos, because the demo button always creates a fresh account. To keep real accounts, set `ROPPO_DATABASE_URL` to a
+PostgreSQL URL (e.g. Supabase, Neon or Render Postgres). `postgres://` URLs are accepted as-is.
+
+To build the same single-service image locally:
+
+```bash
+docker build -t roppo . && docker run -p 8000:8000 -e ROPPO_JWT_SECRET=change-me roppo
+```
+
+Then open <http://localhost:8000>.
+
+### Option A — Docker Compose (PostgreSQL + API + web)
 
 ```bash
 cp .env.example .env        # set ROPPO_JWT_SECRET; optionally ANTHROPIC_API_KEY
@@ -141,6 +162,7 @@ All settings are environment variables. See [`.env.example`](.env.example).
 | `ROPPO_LLM_MODEL` | Claude model ID (default `claude-opus-5-5`) |
 | `ROPPO_GREENHOUSE_BOARDS` / `ROPPO_LEVER_COMPANIES` | Comma-separated public job boards to sync live vacancies from |
 | `ROPPO_SEED_SAMPLE_JOBS` | Seed the fictional, clearly labelled demo listings |
+| `ROPPO_DEMO_MODE` | Show the one-click "Explore the demo" button (demo accounts are deleted after 24 h) |
 | `ROPPO_FRESHNESS_DAYS` | Age after which a live listing is flagged as "needs re-checking" |
 
 ---
@@ -164,6 +186,8 @@ Roppo/
 ├── samples/               fictional resumes (PDF + DOCX) and their generator
 ├── docs/                  architecture, scoring, API
 ├── screenshots/
+├── Dockerfile             single-service image (Render)
+├── render.yaml            Render Blueprint
 ├── docker-compose.yml
 └── .env.example
 ```

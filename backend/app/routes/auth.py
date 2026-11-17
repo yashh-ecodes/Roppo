@@ -46,6 +46,18 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
     return {"access_token": create_access_token(user.id), "token_type": "bearer", "user": user_out(user)}
 
 
+@router.post("/demo", status_code=201)
+def demo(db: Session = Depends(get_db)):
+    """Create a fresh, pre-filled demo account (fictional data) — for presentations."""
+    from app.config import get_settings
+    from app.services.demo import create_demo_user
+
+    if not get_settings().demo_mode:
+        raise HTTPException(404, "Demo mode is disabled.")
+    user = create_demo_user(db)
+    return {"access_token": create_access_token(user.id), "token_type": "bearer", "user": user_out(user)}
+
+
 @router.get("/me")
 def me(user: User = Depends(get_current_user)):
     return user_out(user)

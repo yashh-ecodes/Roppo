@@ -3,8 +3,10 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.database import SessionLocal, init_db
@@ -66,4 +68,20 @@ def meta():
         "quality_weights": QUALITY_WEIGHTS,
         "freshness_days": settings.freshness_days,
         "max_upload_mb": settings.max_upload_mb,
+        "demo_mode": settings.demo_mode,
     }
+
+
+# Single-service deployment: serve the built React app (and its client-side routes) at "/".
+_dist = settings.frontend_dist
+if (_dist / "index.html").exists():
+    app.mount("/assets", StaticFiles(directory=_dist / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str):
+        if path.startswith("api/"):
+            raise HTTPException(404, "Not found")
+        candidate = (_dist / path).resolve()
+        if path and candidate.is_file() and _dist.resolve() in candidate.parents:
+            return FileResponse(candidate)
+        return FileResponse(_dist / "index.html")

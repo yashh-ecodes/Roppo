@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, FileSearch, Map, Sparkles } from "lucide-react";
+import { Building2, FileSearch, Map, PlayCircle, Sparkles } from "lucide-react";
+import { api } from "../services/api.js";
 import { Logo } from "../components/Layout.jsx";
 import { Alert, Button } from "../components/ui.jsx";
 import { useAuth } from "../services/auth.jsx";
@@ -19,6 +20,25 @@ export default function AuthPage({ mode }) {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const isRegister = mode === "register";
+  const [demoEnabled, setDemoEnabled] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
+
+  useEffect(() => {
+    api.meta().then((m) => setDemoEnabled(Boolean(m.demo_mode))).catch(() => {});
+  }, []);
+
+  const startDemo = async () => {
+    setError(null);
+    setDemoBusy(true);
+    try {
+      await signIn("demo");
+      navigate("/");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDemoBusy(false);
+    }
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -95,6 +115,17 @@ export default function AuthPage({ mode }) {
               {isRegister ? "Create account" : "Sign in"}
             </Button>
           </div>
+          {demoEnabled && (
+            <div className="mt-6 rounded-xl border border-brand-200 bg-brand-50 p-4">
+              <div className="text-sm font-medium text-brand-900">Just looking around?</div>
+              <p className="mt-0.5 text-xs text-brand-700">
+                Open a ready-made demo account with a fictional resume, analysis, matches and roadmap. Nothing to fill in.
+              </p>
+              <Button type="button" variant="secondary" icon={PlayCircle} loading={demoBusy} onClick={startDemo} className="mt-3 w-full">
+                Explore the demo
+              </Button>
+            </div>
+          )}
           <p className="mt-6 text-center text-sm text-slate-500">
             {isRegister ? "Already have an account? " : "New to Roppo? "}
             <Link className="font-medium text-brand-600 hover:underline" to={isRegister ? "/login" : "/register"}>

@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     llm_model: str = "claude-opus-5-5"
     llm_effort: str = "medium"
 
+    # One-click demo accounts pre-filled with a fictional resume (useful for presentations).
+    demo_mode: bool = True
+
+    # Built React app to serve at "/" (single-service deployment). Ignored if the folder doesn't exist.
+    frontend_dist: Path = BACKEND_DIR.parent / "frontend" / "dist"
+
     # Seed illustrative sample jobs on first start (clearly labelled in the UI).
     seed_sample_jobs: bool = True
 
@@ -48,4 +54,11 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if not settings.database_url.strip():  # blank env var → local SQLite
+        settings.database_url = Settings.model_fields["database_url"].default
+    url = settings.database_url
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            settings.database_url = "postgresql+psycopg://" + url[len(prefix):]
+    return settings

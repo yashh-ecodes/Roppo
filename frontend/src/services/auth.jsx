@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signIn = useCallback(async (mode, body) => {
-    const res = mode === "register" ? await api.register(body) : await api.login(body);
+    const res = mode === "demo" ? await api.demo() : mode === "register" ? await api.register(body) : await api.login(body);
     tokenStore.set(res.access_token);
     setUser(res.user);
     return res.user;
